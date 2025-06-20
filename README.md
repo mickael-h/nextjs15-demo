@@ -53,7 +53,7 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 🧪 Testing & Linting
+## 🧪 Testing, Linting & Type Checking
 
 - **Run all tests:**
   ```bash
@@ -68,14 +68,28 @@ Visit [http://localhost:3000](http://localhost:3000).
   npm run lint
   npm run format
   ```
+- **Check type validity:**
+  ```bash
+  npm run typecheck
+  ```
 
-### Pre-commit Hook
+### Pre-commit Hook (Husky v10+)
 
 - Husky and lint-staged are set up to run Prettier and ESLint on staged files before every commit.
-- If you add new hooks, use:
-  ```bash
-  npx husky add .husky/pre-commit "npx lint-staged"
+- The `.husky/pre-commit` file now contains only the commands to run (no `husky.sh`):
+  ```sh
+  npx lint-staged
+  npm test
   ```
+- If you add new hooks, just add your commands directly to the relevant `.husky/*` file.
+
+### Prettier Ignore
+
+- The `.prettierignore` file ensures Prettier does **not** format:
+  - `.next` (build output)
+  - `node_modules` (dependencies)
+  - All config files matching `*.config.*` (e.g., `next.config.js`, `tailwind.config.js`)
+  - All files matching `*.rc` (e.g., `.eslintrc`, `.prettierrc`)
 
 ---
 
@@ -118,7 +132,7 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 1. Fork the repo and create your branch.
 2. Make your changes (with tests!).
-3. Ensure all tests and lint checks pass.
+3. Ensure all tests, lint, and type checks pass.
 4. Submit a pull request.
 
 ---

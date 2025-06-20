@@ -39,13 +39,15 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.0",
-    "typescript": "^5",
-    "undici": "^7.10.0"
+    "typescript": "^5"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,css,md,json}": [
-      "prettier --write",
-      "eslint --fix"
+    "*.{js,jsx,ts,tsx,css,json}": [
+      "prettier -c",
+      "eslint"
+    ],
+    "*.{ts,tsx}": [
+      "tsc --noEmit"
     ]
   }
 }
