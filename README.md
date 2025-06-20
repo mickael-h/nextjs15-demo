@@ -23,7 +23,7 @@ It fetches and displays the top 20 stories from Hacker News, with author details
 ### 1. **Clone and Install**
 
 ```bash
-git clone <your-repo-url>
+git clone git@github.com:mickael-h/nextjs15-demo.git
 cd nextjs15-demo
 npm install
 ```
