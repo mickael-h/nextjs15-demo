@@ -34,10 +34,12 @@ export function StoryList({ stories, error, page, totalPages }: StoryListProps) 
   if (selected) return <StoryDetail story={selected} onBack={handleBack} />;
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <div className="w-full flex flex-col gap-4 max-w-xl">
-        {stories.map((story) => (
-          <StoryCard key={story.id} story={story} onClick={() => handleSelect(story)} />
-        ))}
+      <div className="w-full flex flex-col gap-4 max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+          {stories.map((story) => (
+            <StoryCard key={story.id} story={story} onClick={() => handleSelect(story)} />
+          ))}
+        </div>
       </div>
       <Pagination
         page={page}

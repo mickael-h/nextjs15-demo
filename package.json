@@ -14,7 +14,9 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@types/dompurify": "^3.2.0",
     "cheerio": "^1.1.0",
+    "dompurify": "^3.2.6",
     "dotenv": "^16.5.0",
     "got": "^14.4.7",
     "next": "^15.3.4",
