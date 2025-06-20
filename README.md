@@ -3,6 +3,10 @@
 A modern, production-grade demo app built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, and **Tailwind CSS**.  
 It fetches and displays paginated Hacker News stories, with author details, dark mode, robust testing, and strict code quality enforcement.
 
+## 🌐 Live Demo
+
+**Try it out:** [https://nextjs15-demo-alpha.vercel.app/](https://nextjs15-demo-alpha.vercel.app/)
+
 ---
 
 ## 🚀 Features
