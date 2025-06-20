@@ -14,7 +14,7 @@ export default function StoryListClient() {
   const { data, error, isLoading, isValidating } = useSWR<PaginatedStories>(
     `/api/hn/top20?page=${page}`,
     fetcher,
-    { suspense: false },
+    { suspense: false, revalidateOnFocus: false },
   );
 
   if (isLoading || isValidating) {
