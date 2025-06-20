@@ -1,23 +1,28 @@
 import { HNStory, HNUser } from './types';
 
-export async function fetchTopStories(
+export async function fetchPagedTopStories(
   fetchImpl: typeof fetch,
   hnApiUrl: string,
-): Promise<HNStory[]> {
+  page: number = 1,
+  limit: number = 20,
+) {
   const TOP_STORIES_URL = `${hnApiUrl}v0/topstories.json`;
   const ITEM_URL = `${hnApiUrl}v0/item`;
-
-  // Fetch top story IDs
+  // Fetch all top story IDs
   const idsRes = await fetchImpl(TOP_STORIES_URL);
   if (!idsRes.ok) {
     throw new Error('Failed to fetch story IDs');
   }
   const ids: number[] = await idsRes.json();
-  const top20 = ids.slice(0, 20);
 
-  // Fetch story details in parallel
+  const total = ids.length;
+  const totalPages = Math.ceil(total / limit);
+  const start = (page - 1) * limit;
+  const end = start + limit;
+  const pageIds = ids.slice(start, end);
+  // Fetch only the stories for this page
   const stories = await Promise.all(
-    top20.map(async (id) => {
+    pageIds.map(async (id) => {
       const res = await fetchImpl(`${ITEM_URL}/${id}.json`);
       if (!res.ok) return null;
       const data = await res.json();
@@ -34,10 +39,10 @@ export async function fetchTopStories(
       } satisfies HNStory;
     }),
   );
-
   const filteredStories = stories.filter(Boolean) as HNStory[];
+  // Sort the page by score descending
   filteredStories.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-  return filteredStories;
+  return { stories: filteredStories, page, limit, total, totalPages };
 }
 
 export async function fetchUser(

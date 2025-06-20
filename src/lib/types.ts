@@ -12,3 +12,11 @@ export interface HNUser {
   karma: number;
   created: number;
 }
+
+export interface PaginatedStories {
+  stories: HNStory[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}

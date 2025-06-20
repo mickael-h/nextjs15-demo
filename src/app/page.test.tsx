@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { StoryList } from '@/components/StoryList';
 import { HNStory } from '@/lib/types';
 
+// Mock next/navigation hooks for App Router context
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  useSearchParams: () => ({ get: () => null }),
+}));
+
 global.fetch = jest.fn().mockResolvedValue({
   ok: true,
   json: () => Promise.resolve({ id: 'author1', karma: 123, created: 1600000000 }),
@@ -26,13 +32,13 @@ describe('StoryList component', () => {
   });
 
   it('renders the heading and stories', async () => {
-    render(<StoryList stories={mockStories} error={null} />);
+    render(<StoryList stories={mockStories} error={null} page={1} totalPages={1} />);
     expect(screen.getByText('Test Story')).toBeInTheDocument();
     expect(screen.getByText(/by\s+author1\s+•\s+Score:\s+100/)).toBeInTheDocument();
   });
 
   it('shows error message on error', () => {
-    render(<StoryList stories={[]} error="Something went wrong" />);
+    render(<StoryList stories={[]} error="Something went wrong" page={1} totalPages={1} />);
     expect(screen.getByText('Error: Something went wrong')).toBeInTheDocument();
   });
 
@@ -63,7 +69,7 @@ describe('StoryList component', () => {
   });
 
   it('allows clicking a story to view its details and back to list', async () => {
-    render(<StoryList stories={mockStories} error={null} />);
+    render(<StoryList stories={mockStories} error={null} page={1} totalPages={1} />);
     const user = userEvent.setup();
     const storyButton = screen.getByRole('button', {
       name: /view details for test story/i,
