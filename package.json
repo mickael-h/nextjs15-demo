@@ -14,21 +14,13 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "metascraper": "^5.47.1",
-    "metascraper-author": "^5.47.1",
-    "metascraper-clearbit": "^5.47.1",
-    "metascraper-date": "^5.47.1",
-    "metascraper-description": "^5.47.1",
-    "metascraper-image": "^5.47.1",
-    "metascraper-logo": "^5.47.1",
-    "metascraper-publisher": "^5.47.1",
-    "metascraper-title": "^5.47.1",
-    "metascraper-url": "^5.47.1",
+    "cheerio": "^1.1.0",
+    "dotenv": "^16.5.0",
+    "got": "^14.4.7",
+    "next": "^15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "swr": "^2.3.3",
-    "next": "^15.3.4",
-    "dotenv": "^16.5.0"
+    "swr": "^2.3.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

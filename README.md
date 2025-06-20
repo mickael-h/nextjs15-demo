@@ -12,7 +12,7 @@ It fetches and displays paginated Hacker News stories, with author details, dark
 - **Tailwind CSS** for styling and dark mode (all styling via utility classes in `className`)
 - **API proxying**: All HN API requests go through your Next.js backend
 - **Pagination**: Browse stories with accessible, robust pagination controls
-- **Link Previews**: Rich previews for story URLs (image, title, description, logo) using metascraper
+- **Link Previews**: Rich previews for story URLs (image, title, description, logo) using a pure JS Cheerio-based scraper
 - **Client-side image handling**: All external images use a custom `ClientImage` (Next.js `<Image />` with custom loader, no domain restrictions)
 - **Author details**: View karma and account creation date for each story's author
 - **Accessibility**: Keyboard navigation, ARIA labels, and semantic HTML
@@ -116,7 +116,7 @@ Visit [http://localhost:3000](http://localhost:3000).
 - **StoryList**: Handles list/detail state, renders `StoryCard` and `StoryDetail`, preserves scroll position when toggling views.
 - **StoryCard**: Clickable, accessible card for each story.
 - **StoryDetail**: Shows full story info and author details, fetches author data via `useAuthor`.
-- **LinkPreview**: Shows a rich preview for story URLs, using metascraper and client-side image handling.
+- **LinkPreview**: Shows a rich preview for story URLs, using a Cheerio-based pure JS scraper and client-side image handling.
 - **ClientImage**: Renders all external images using Next.js `<Image />` with a custom loader and `unoptimized`, bypassing domain restrictions.
 - **useAuthor**: Custom hook for fetching and caching author info, using the public API route.
 
@@ -127,8 +127,9 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 ### **Link Preview & Image Handling**
 
-- Story details show a rich link preview (image, title, description, logo) using metascraper.
+- Story details show a rich link preview (image, title, description, logo) using a pure JS Cheerio-based scraper (no native dependencies).
 - All preview logic is in `src/lib/preview.ts` and proxied via `/api/preview`.
+- All images and logos are resolved to absolute URLs, so previews work even if the source site uses relative paths.
 - All images are rendered client-side with `ClientImage` (Next.js `<Image />` with custom loader and `unoptimized`), so there are no domain restrictions and no `<img>` tags.
 
 ### **SWR Data Fetching**
