@@ -2,6 +2,7 @@
 import React from 'react';
 import { HNStory } from '@/lib/types';
 import { useAuthor } from '../hooks/useAuthor';
+import { LinkPreview } from './LinkPreview';
 
 export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => void }) {
   const { author, loading, error } = useAuthor(story.by);
@@ -23,14 +24,9 @@ export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => v
       )}
       <div className="mb-2">
         {story.url && (
-          <a
-            href={story.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-700 hover:underline"
-          >
-            Visit Story URL
-          </a>
+          <div className="mb-2">
+            <LinkPreview url={story.url} />
+          </div>
         )}
       </div>
       <div className="mb-2">
