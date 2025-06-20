@@ -15,7 +15,7 @@ export function LinkPreview({ url }: LinkPreviewProps) {
   if (isLoading) {
     return (
       <div className="flex items-center border rounded-lg animate-pulse bg-white dark:bg-neutral-900">
-        <div className="w-40 h-28 bg-gray-200 dark:bg-neutral-700 flex-shrink-0" />
+        <div className="w-40 h-28 bg-gray-200 dark:bg-neutral-700 flex-shrink-0 pr-4" />
         <div className="flex-1 space-y-2">
           <div className="h-5 bg-gray-200 dark:bg-neutral-700 rounded w-1/2" />
           <div className="h-4 bg-gray-200 dark:bg-neutral-700 rounded w-1/3" />
