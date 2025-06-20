@@ -20,7 +20,7 @@ function resolveUrl(possiblyRelative: string | undefined, base: string): string 
 
 export async function fetchLinkPreview(url: string): Promise<PreviewData> {
   try {
-    const { body: html } = await got(url, { timeout: 10000 });
+    const html = await got(url, { timeout: { request: 10000 } }).text();
     const $ = cheerio.load(html);
 
     const getMeta = (name: string) =>
