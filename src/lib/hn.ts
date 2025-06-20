@@ -1,4 +1,4 @@
-import { HNStory, HNUser } from './types';
+import { HNStory, HNUser, HNComment } from './types';
 
 export async function fetchPagedTopStories(
   fetchImpl: typeof fetch,
@@ -36,6 +36,8 @@ export async function fetchPagedTopStories(
         url: data.url,
         by: data.by,
         text: data.text,
+        kids: data.kids,
+        time: data.time,
       } satisfies HNStory;
     }),
   );
@@ -43,6 +45,43 @@ export async function fetchPagedTopStories(
   // Sort the page by score descending
   filteredStories.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   return { stories: filteredStories, page, limit, total, totalPages };
+}
+
+export async function fetchComments(
+  fetchImpl: typeof fetch,
+  hnApiUrl: string,
+  commentIds: number[],
+  maxDepth: number = 3,
+): Promise<HNComment[]> {
+  if (!commentIds || commentIds.length === 0) return [];
+
+  const ITEM_URL = `${hnApiUrl}v0/item`;
+
+  const fetchComment = async (id: number, depth: number = 0): Promise<HNComment | null> => {
+    if (depth > maxDepth) return null;
+
+    try {
+      const res = await fetchImpl(`${ITEM_URL}/${id}.json`);
+      if (!res.ok) return null;
+
+      const data = await res.json();
+      if (!data || data.deleted || data.dead) return null;
+
+      return {
+        id: data.id,
+        by: data.by,
+        text: data.text,
+        time: data.time,
+        kids: data.kids, // Keep the original kids array for potential future nested fetching
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const comments = await Promise.all(commentIds.map((id) => fetchComment(id)));
+
+  return comments.filter(Boolean) as HNComment[];
 }
 
 export async function fetchUser(

@@ -5,6 +5,18 @@ export interface HNStory {
   url?: string;
   by: string;
   text?: string;
+  kids?: number[]; // Array of comment IDs
+  time: number; // Unix timestamp
+}
+
+export interface HNComment {
+  id: number;
+  by: string;
+  text: string;
+  time: number;
+  kids?: number[]; // Nested comments
+  deleted?: boolean;
+  dead?: boolean;
 }
 
 export interface HNUser {

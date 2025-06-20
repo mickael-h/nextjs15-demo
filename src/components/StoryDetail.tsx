@@ -2,11 +2,14 @@
 import React from 'react';
 import { HNStory } from '@/lib/types';
 import { useAuthor } from '../hooks/useAuthor';
+import { useComments } from '../hooks/useComments';
 import { LinkPreview } from './LinkPreview';
+import { CommentsList } from './CommentsList';
 import DOMPurify from 'dompurify';
 
 export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => void }) {
   const { author, loading, error } = useAuthor(story.by);
+  const { comments, loading: commentsLoading, error: commentsError } = useComments(story.id);
 
   // Safely sanitize HTML content if present
   const sanitizedText = story.text ? DOMPurify.sanitize(story.text) : null;
@@ -36,6 +39,11 @@ export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => v
               <LinkPreview url={story.url} />
             </div>
           )}
+
+          {/* Comments Section */}
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-neutral-700">
+            <CommentsList comments={comments} loading={commentsLoading} error={commentsError} />
+          </div>
         </div>
         <div className="xl:col-span-1">
           <div className="bg-gray-50 dark:bg-neutral-800 p-6 rounded-lg sticky top-4">
@@ -47,6 +55,20 @@ export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => v
               <div>
                 Author: <span className="font-mono font-semibold text-lg">{story.by}</span>
               </div>
+              {story.time && (
+                <div>
+                  Posted:{' '}
+                  <span className="text-sm">
+                    {new Date(story.time * 1000).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+              {story.kids && (
+                <div>
+                  Comments:{' '}
+                  <span className="font-mono font-semibold text-lg">{story.kids.length}</span>
+                </div>
+              )}
             </div>
             {loading && (
               <div className="mt-6 pt-4 border-t border-gray-200 dark:border-neutral-700">

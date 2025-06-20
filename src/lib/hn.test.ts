@@ -1,4 +1,4 @@
-import { fetchUser, fetchPagedTopStories } from './hn';
+import { fetchUser, fetchPagedTopStories, fetchComments } from './hn';
 
 describe('fetchPagedTopStories', () => {
   const hnApiUrl = 'https://mock-hn-api/';
@@ -133,5 +133,127 @@ describe('fetchUser', () => {
     await expect(
       fetchUser(mockFetch as unknown as typeof fetch, hnApiUrl, username),
     ).rejects.toThrow(/Failed to fetch user/);
+  });
+});
+
+describe('fetchComments', () => {
+  const hnApiUrl = 'https://mock-hn-api/';
+
+  it('returns empty array when no comment IDs provided', async () => {
+    const mockFetch = jest.fn();
+    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, []);
+    expect(comments).toEqual([]);
+  });
+
+  it('returns comments for valid comment IDs', async () => {
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            by: 'user1',
+            text: 'First comment',
+            time: 1600000000,
+            kids: [2, 3],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 2,
+            by: 'user2',
+            text: 'Second comment',
+            time: 1600000001,
+            kids: [],
+          }),
+      });
+
+    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2]);
+
+    expect(comments).toHaveLength(2);
+    expect(comments[0]).toEqual({
+      id: 1,
+      by: 'user1',
+      text: 'First comment',
+      time: 1600000000,
+      kids: [2, 3],
+    });
+    expect(comments[1]).toEqual({
+      id: 2,
+      by: 'user2',
+      text: 'Second comment',
+      time: 1600000001,
+      kids: [],
+    });
+  });
+
+  it('filters out deleted and dead comments', async () => {
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            by: 'user1',
+            text: 'Valid comment',
+            time: 1600000000,
+            deleted: false,
+            dead: false,
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 2,
+            by: 'user2',
+            text: 'Deleted comment',
+            time: 1600000001,
+            deleted: true,
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 3,
+            by: 'user3',
+            text: 'Dead comment',
+            time: 1600000002,
+            dead: true,
+          }),
+      });
+
+    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2, 3]);
+
+    expect(comments).toHaveLength(1);
+    expect(comments[0].id).toBe(1);
+  });
+
+  it('handles fetch errors gracefully', async () => {
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            by: 'user1',
+            text: 'Valid comment',
+            time: 1600000000,
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: false, // Simulate fetch error
+      });
+
+    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2]);
+
+    expect(comments).toHaveLength(1);
+    expect(comments[0].id).toBe(1);
   });
 });
