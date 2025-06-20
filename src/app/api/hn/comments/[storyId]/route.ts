@@ -5,11 +5,9 @@ export const dynamic = 'force-dynamic';
 
 const HN_API_URL = process.env.HN_API_URL;
 
-export async function GET(request: Request, { params }: { params: Promise<{ storyId: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ storyId: string }> }) {
   try {
     const { storyId } = await params;
-    const { searchParams } = new URL(request.url);
-    const maxDepth = parseInt(searchParams.get('maxDepth') || '3', 10);
 
     // First, fetch the story to get its comment IDs
     const storyRes = await fetch(`${HN_API_URL}v0/item/${storyId}.json`);
@@ -23,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ stor
     }
 
     // Fetch the comments
-    const comments = await fetchComments(fetch, HN_API_URL!, story.kids, maxDepth);
+    const comments = await fetchComments(fetch, HN_API_URL!, story.kids);
 
     return NextResponse.json({ comments });
   } catch (err: unknown) {

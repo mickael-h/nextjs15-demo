@@ -51,15 +51,12 @@ export async function fetchComments(
   fetchImpl: typeof fetch,
   hnApiUrl: string,
   commentIds: number[],
-  maxDepth: number = 3,
 ): Promise<HNComment[]> {
   if (!commentIds || commentIds.length === 0) return [];
 
   const ITEM_URL = `${hnApiUrl}v0/item`;
 
-  const fetchComment = async (id: number, depth: number = 0): Promise<HNComment | null> => {
-    if (depth > maxDepth) return null;
-
+  const fetchComment = async (id: number): Promise<HNComment | null> => {
     try {
       const res = await fetchImpl(`${ITEM_URL}/${id}.json`);
       if (!res.ok) return null;
@@ -72,7 +69,7 @@ export async function fetchComments(
         by: data.by,
         text: data.text,
         time: data.time,
-        kids: data.kids, // Keep the original kids array for potential future nested fetching
+        kids: data.kids, // Always return IDs for lazy loading
       };
     } catch {
       return null;

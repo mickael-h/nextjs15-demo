@@ -14,7 +14,7 @@ export interface HNComment {
   by: string;
   text: string;
   time: number;
-  kids?: number[]; // Nested comments
+  kids?: number[] | HNComment[]; // Can be either IDs (for lazy loading) or actual comment objects
   deleted?: boolean;
   dead?: boolean;
 }

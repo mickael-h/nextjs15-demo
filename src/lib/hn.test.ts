@@ -169,6 +169,17 @@ describe('fetchComments', () => {
             time: 1600000001,
             kids: [],
           }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 3,
+            by: 'user3',
+            text: 'Third comment',
+            time: 1600000002,
+            kids: [],
+          }),
       });
 
     const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2]);
@@ -179,7 +190,7 @@ describe('fetchComments', () => {
       by: 'user1',
       text: 'First comment',
       time: 1600000000,
-      kids: [2, 3],
+      kids: [2, 3], // Now returns IDs for lazy loading
     });
     expect(comments[1]).toEqual({
       id: 2,
@@ -255,5 +266,115 @@ describe('fetchComments', () => {
 
     expect(comments).toHaveLength(1);
     expect(comments[0].id).toBe(1);
+  });
+
+  it('respects maxDepth parameter for nested comments', async () => {
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            by: 'user1',
+            text: 'Level 1 comment',
+            time: 1600000000,
+            kids: [2],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 2,
+            by: 'user2',
+            text: 'Level 2 comment',
+            time: 1600000001,
+            kids: [3],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 3,
+            by: 'user3',
+            text: 'Level 3 comment',
+            time: 1600000002,
+            kids: [4],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 4,
+            by: 'user4',
+            text: 'Level 4 comment (should not be fetched)',
+            time: 1600000003,
+            kids: [],
+          }),
+      });
+
+    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1]);
+
+    expect(comments).toHaveLength(1);
+    expect(comments[0].id).toBe(1);
+    expect(comments[0].kids).toEqual([2]); // Now returns IDs for lazy loading
+  });
+
+  it('fetches multiple levels of nested comments correctly', async () => {
+    const mockFetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 1,
+            by: 'user1',
+            text: 'Level 1 comment',
+            time: 1600000000,
+            kids: [2, 3],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 2,
+            by: 'user2',
+            text: 'Level 2 comment A',
+            time: 1600000001,
+            kids: [4],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 3,
+            by: 'user3',
+            text: 'Level 2 comment B',
+            time: 1600000002,
+            kids: [],
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: 4,
+            by: 'user4',
+            text: 'Level 3 comment',
+            time: 1600000003,
+            kids: [],
+          }),
+      });
+
+    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1]);
+
+    expect(comments).toHaveLength(1);
+    expect(comments[0].id).toBe(1);
+    expect(comments[0].kids).toEqual([2, 3]); // Returns IDs for lazy loading
   });
 });
