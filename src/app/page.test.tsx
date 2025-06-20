@@ -22,6 +22,7 @@ const mockStories: HNStory[] = [
     score: 100,
     url: 'https://example.com',
     by: 'author1',
+    time: 1600000000,
   },
 ];
 
@@ -84,7 +85,7 @@ describe('StoryList component', () => {
     expect(screen.getByText('Karma:')).toBeInTheDocument();
     expect(screen.getByText('123')).toBeInTheDocument();
     expect(screen.getByText(/account created:/i)).toBeInTheDocument();
-    expect(screen.getByText(/9\/13\/2020/)).toBeInTheDocument();
+    expect(screen.getAllByText(/9\/13\/2020/).length).toBeGreaterThanOrEqual(1);
     // Go back
     await user.click(screen.getByRole('button', { name: /back to list/i }));
     expect(screen.getByText('Test Story')).toBeInTheDocument();
@@ -96,6 +97,7 @@ describe('StoryList component', () => {
       title: `Story ${i + 1}`,
       score: 100 - i,
       by: `author${i + 1}`,
+      time: 1600000000 + i,
     }));
     const pageSize = 20;
     const totalPages = 3;
