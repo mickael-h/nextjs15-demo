@@ -2,10 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StoryList } from '@/components/StoryList';
 import { HNStory } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 // Mock next/navigation hooks for App Router context
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: jest.fn(),
   useSearchParams: () => ({ get: () => null }),
 }));
 
@@ -87,5 +88,69 @@ describe('StoryList component', () => {
     // Go back
     await user.click(screen.getByRole('button', { name: /back to list/i }));
     expect(screen.getByText('Test Story')).toBeInTheDocument();
+  });
+
+  describe('Pagination logic', () => {
+    const allStories = Array.from({ length: 60 }, (_, i) => ({
+      id: i + 1,
+      title: `Story ${i + 1}`,
+      score: 100 - i,
+      by: `author${i + 1}`,
+    }));
+    const pageSize = 20;
+    const totalPages = 3;
+
+    it('disables Previous on first page and Next on last page', () => {
+      const { rerender } = render(
+        <StoryList
+          stories={allStories.slice(0, pageSize)}
+          error={null}
+          page={1}
+          totalPages={totalPages}
+        />,
+      );
+      expect(screen.getByRole('button', { name: /previous page/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /next page/i })).not.toBeDisabled();
+
+      rerender(
+        <StoryList
+          stories={allStories.slice(40, 60)}
+          error={null}
+          page={3}
+          totalPages={totalPages}
+        />,
+      );
+      expect(screen.getByRole('button', { name: /next page/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /previous page/i })).not.toBeDisabled();
+    });
+
+    it('disables the active page button', () => {
+      render(
+        <StoryList
+          stories={allStories.slice(20, 40)}
+          error={null}
+          page={2}
+          totalPages={totalPages}
+        />,
+      );
+      const page2 = screen.getByRole('button', { name: '2' });
+      expect(page2).toBeDisabled();
+    });
+
+    it('updates the URL with the correct page parameter when a page button is clicked', async () => {
+      const push = jest.fn();
+      (useRouter as jest.Mock).mockReturnValue({ push });
+      render(
+        <StoryList
+          stories={allStories.slice(0, pageSize)}
+          error={null}
+          page={1}
+          totalPages={totalPages}
+        />,
+      );
+      const page2 = screen.getByRole('button', { name: '2' });
+      await userEvent.click(page2);
+      expect(push).toHaveBeenCalledWith('?page=2');
+    });
   });
 });
