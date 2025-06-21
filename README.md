@@ -86,9 +86,11 @@ Visit [http://localhost:3000](http://localhost:3000).
 ### Pre-commit Hook (Husky v10+)
 
 - Husky and lint-staged are set up to run Prettier and ESLint on staged files before every commit.
-- The `.husky/pre-commit` file now contains only the commands to run (no `husky.sh`):
+- The `.husky/pre-commit` file contains the commands to run (no `husky.sh`):
   ```sh
   npx lint-staged
+  npm run lint
+  npm run typecheck
   npm test
   ```
 - If you add new hooks, just add your commands directly to the relevant `.husky/*` file.
