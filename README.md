@@ -1,7 +1,7 @@
 # Next.js 15 Hacker News Top Stories Demo
 
 A modern, production-grade demo app built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, and **Tailwind CSS**.  
-It fetches and displays paginated Hacker News stories, with author details, dark mode, robust testing, and strict code quality enforcement.
+It fetches and displays paginated Hacker News stories, with author details, comments, dark mode, robust testing, and strict code quality enforcement.
 
 ## 🌐 Live Demo
 
@@ -19,6 +19,8 @@ It fetches and displays paginated Hacker News stories, with author details, dark
 - **Link Previews**: Rich previews for story URLs (image, title, description, logo) using a pure JS Cheerio-based scraper
 - **Client-side image handling**: All external images use a custom `ClientImage` (Next.js `<Image />` with custom loader, no domain restrictions)
 - **Author details**: View karma and account creation date for each story's author
+- **Comments system**: Full comment threads with lazy-loading nested comments and safe HTML rendering
+- **Safe HTML rendering**: All user-generated content is sanitized with DOMPurify to prevent XSS attacks
 - **Accessibility**: Keyboard navigation, ARIA labels, and semantic HTML
 - **Testing**: Jest, React Testing Library, and code coverage
 - **Prettier, ESLint, Husky, lint-staged**: Enforced code style and pre-commit checks
@@ -106,23 +108,37 @@ Visit [http://localhost:3000](http://localhost:3000).
 ### **Directory Structure**
 
 - `src/app/` — Next.js App Router, API routes, pages, and layout
-- `src/components/` — UI components (StoryList, StoryCard, StoryDetail, LinkPreview, ClientImage, etc.)
-- `src/hooks/` — Custom React hooks (for `useAuthor`)
+- `src/components/` — UI components (StoryList, StoryCard, StoryDetail, LinkPreview, ClientImage, Comment, CommentsList, etc.)
+- `src/hooks/` — Custom React hooks (useAuthor, useComments, useNestedComments)
 - `src/lib/` — Pure backend logic (for HN API fetchers, link preview scraping, easily unit tested)
 
 ### **API Proxying**
 
-- All requests to the Hacker News API are proxied through `/api/hn/top20`, `/api/hn/user/[username]`, and `/api/preview` routes.
+- All requests to the Hacker News API are proxied through `/api/hn/top20`, `/api/hn/user/[username]`, `/api/hn/comments/[storyId]`, `/api/hn/comments/nested`, and `/api/preview` routes.
 - This enables error handling and lets you add business logic to requests (like sorting, pagination, or scraping).
 
 ### **Component Design**
 
 - **StoryList**: Handles list/detail state, renders `StoryCard` and `StoryDetail`, preserves scroll position when toggling views.
 - **StoryCard**: Clickable, accessible card for each story.
-- **StoryDetail**: Shows full story info and author details, fetches author data via `useAuthor`.
+- **StoryDetail**: Shows full story info, author details, and comments. Fetches author data via `useAuthor` and comments via `useComments`.
+- **Comment**: Individual comment component with support for nested replies and safe HTML rendering.
+- **CommentsList**: Manages the list of comments with loading states and error handling.
 - **LinkPreview**: Shows a rich preview for story URLs, using a Cheerio-based pure JS scraper and client-side image handling.
 - **ClientImage**: Renders all external images using Next.js `<Image />` with a custom loader and `unoptimized`, bypassing domain restrictions.
 - **useAuthor**: Custom hook for fetching and caching author info, using the public API route.
+- **useComments**: Custom hook for fetching story comments with SWR caching.
+- **useNestedComments**: Custom hook for lazy-loading nested comments on-demand.
+
+### **Comments System**
+
+- **Lazy Loading**: Comments are only fetched when the user clicks "show X replies" to improve performance
+- **Nested Comments**: Supports up to 5 levels of nested comments with proper indentation
+- **Safe HTML Rendering**: All comment content is sanitized with DOMPurify to prevent XSS attacks
+- **Skeleton Loading**: Beautiful skeleton loaders while comments are being fetched
+- **Error Handling**: Graceful error display if comments fail to load
+- **SWR Integration**: Efficient caching and data fetching with SWR
+- **Collapsible Threads**: All nested comments start collapsed for better UX
 
 ### **Pagination**
 
@@ -138,20 +154,29 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 ### **SWR Data Fetching**
 
-- SWR is used for client-side data fetching.
+- SWR is used for client-side data fetching with automatic caching.
 - Automatic refetching on window focus is **disabled** for a stable UX.
+- Comments are cached for 1 minute to avoid unnecessary refetches.
+
+### **Security**
+
+- **DOMPurify**: All user-generated HTML content (comments, story text) is sanitized to prevent XSS attacks
+- **Safe HTML Rendering**: Uses `dangerouslySetInnerHTML` only with sanitized content
+- **Input Validation**: All API inputs are validated and sanitized
 
 ### **Testing Philosophy**
 
 - All business logic is extracted to pure functions/modules for easy unit testing.
 - Hooks are tested with real fetch mocking, not just stubs.
 - UI is tested with React Testing Library for realistic user flows.
+- Comments system is thoroughly tested with edge cases and error scenarios.
 
 ### **Code Quality**
 
 - **Prettier** and **ESLint** enforce consistent style and catch errors.
 - **Husky** and **lint-staged** ensure only well-formatted, linted code is committed.
 - **TypeScript** is used everywhere for safety and maintainability.
+- **DOMPurify** ensures safe HTML rendering throughout the application.
 
 ---
 
@@ -171,6 +196,7 @@ Visit [http://localhost:3000](http://localhost:3000).
 - [Tailwind CSS](https://tailwindcss.com/)
 - [Jest](https://jestjs.io/)
 - [Husky](https://typicode.github.io/husky/)
+- [DOMPurify](https://github.com/cure53/DOMPurify)
 
 ---
 
