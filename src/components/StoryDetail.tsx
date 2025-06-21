@@ -66,7 +66,9 @@ export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => v
               {story.kids && (
                 <div>
                   Comments:{' '}
-                  <span className="font-mono font-semibold text-lg">{story.kids.length}</span>
+                  <span className="font-mono font-semibold text-lg">
+                    {commentsLoading ? '...' : comments.length}
+                  </span>
                 </div>
               )}
             </div>
