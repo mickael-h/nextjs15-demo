@@ -5,10 +5,10 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export function useNestedComments(commentIds: number[] | undefined, maxDepth: number = 5) {
+export function useNestedComments(commentIds: number[] | undefined) {
   const { data, error, isLoading, isValidating } = useSWR<{ comments: HNComment[] }>(
     commentIds && commentIds.length > 0
-      ? `${BASE_URL}/api/hn/comments/nested?ids=${commentIds.join(',')}&maxDepth=${maxDepth}`
+      ? `${BASE_URL}/api/hn/comments/nested?ids=${commentIds.join(',')}`
       : null,
     fetcher,
     {

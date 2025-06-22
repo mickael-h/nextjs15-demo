@@ -67,7 +67,6 @@ export function Comment({ comment, depth = 0 }: CommentProps) {
       : 0;
 
   const hasReplies = hasReplyIds || hasLoadedReplies;
-  const maxDepth = 5; // Prevent too deep nesting
 
   return (
     <div
@@ -102,7 +101,7 @@ export function Comment({ comment, depth = 0 }: CommentProps) {
         />
       </div>
 
-      {hasReplies && showReplies && depth < maxDepth && (
+      {hasReplies && showReplies && (
         <div className="space-y-2">
           {nestedLoading && (
             <>

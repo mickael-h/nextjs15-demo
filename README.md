@@ -135,7 +135,7 @@ Visit [http://localhost:3000](http://localhost:3000).
 ### **Comments System**
 
 - **Lazy Loading**: Comments are only fetched when the user clicks "show X replies" to improve performance
-- **Nested Comments**: Supports up to 5 levels of nested comments with proper indentation (configurable, default is 5)
+- **Nested Comments**: Unlimited depth, loaded on-demand as users expand threads
 - **Safe HTML Rendering**: All comment content is sanitized with DOMPurify to prevent XSS attacks
 - **Skeleton Loading**: Beautiful skeleton loaders while comments are being fetched
 - **Error Handling**: Graceful error display if comments fail to load
