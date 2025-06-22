@@ -26,6 +26,18 @@ export default function StoryListClient() {
   if (!data) {
     return <StoryList stories={[]} error={null} page={page} totalPages={1} />;
   }
+  if (!Array.isArray(data.stories)) {
+    return (
+      <StoryList
+        stories={[]}
+        error={
+          'Failed to load stories: The stories data is missing or malformed. Please try again later.'
+        }
+        page={page}
+        totalPages={1}
+      />
+    );
+  }
   return (
     <StoryList stories={data.stories} error={null} page={data.page} totalPages={data.totalPages} />
   );

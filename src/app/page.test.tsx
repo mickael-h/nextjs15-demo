@@ -248,4 +248,48 @@ describe('StoryList component', () => {
       expect(push).toHaveBeenCalledWith('?page=2');
     });
   });
+
+  it('shows a user-friendly error if stories data is missing or malformed', async () => {
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/api/hn/user/author1')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ id: 'author1', karma: 123, created: 1600000000 }),
+        });
+      }
+      if (url.includes('/api/hn/comments/nested')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ comments: [] }),
+        });
+      }
+      if (url.includes('/api/hn/top20')) {
+        // Return malformed data (no stories)
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ page: 1, totalPages: 1 }),
+        });
+      }
+      return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
+    });
+    const StoryListClientWrapper = (await import('@/components/StoryListClientWrapper')).default;
+    renderWithSWR(<StoryListClientWrapper />);
+    // Should show the error message for malformed stories
+    expect(
+      await screen.findByText(/Failed to load stories: The stories data is missing or malformed/i),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a user-friendly error if a runtime error is thrown in StoryListClient', async () => {
+    // Mock StoryListClient to throw
+    jest.resetModules();
+    jest.doMock('@/components/StoryListClient', () => () => {
+      throw new Error('Test crash');
+    });
+    const StoryListClientWrapper = (await import('@/components/StoryListClientWrapper')).default;
+    renderWithSWR(<StoryListClientWrapper />);
+    expect(await screen.findByText(/Something went wrong/i)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn't load the stories/i)).toBeInTheDocument();
+    jest.dontMock('@/components/StoryListClient');
+  });
 });
