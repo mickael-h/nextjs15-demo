@@ -16,11 +16,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Failed to fetch or parse metadata' }, { status: 500 });
   }
 }
-
-export async function POST() {
-  try {
-    // ... existing code ...
-  } catch {
-    return new Response(JSON.stringify({ error: 'Failed to fetch preview' }), { status: 500 });
-  }
-}
