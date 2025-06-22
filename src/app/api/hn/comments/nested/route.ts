@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const idsParam = searchParams.get('ids');
-    const maxDepth = parseInt(searchParams.get('maxDepth') || '3', 10);
+    const maxDepth = parseInt(searchParams.get('maxDepth') || '5', 10);
 
     if (!idsParam) {
       return NextResponse.json({ comments: [] });
