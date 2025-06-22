@@ -1,31 +1,24 @@
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import type { HNUser } from '@/lib/types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export function useAuthor(username: string | null) {
-  const [author, setAuthor] = useState<HNUser | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading, isValidating } = useSWR<HNUser>(
+    username ? `${BASE_URL}/api/hn/user/${username}` : null,
+    fetcher,
+    {
+      suspense: false,
+      revalidateOnFocus: false,
+      dedupingInterval: 60000, // Cache for 1 minute
+    },
+  );
 
-  useEffect(() => {
-    if (!username) {
-      setAuthor(null);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    fetch(`${BASE_URL}/api/hn/user/${username}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setAuthor(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load author details');
-        setLoading(false);
-      });
-  }, [username]);
-
-  return { author, loading, error };
+  return {
+    author: data ?? null,
+    loading: isLoading || isValidating,
+    error: error ? 'Failed to load author details' : null,
+  };
 }

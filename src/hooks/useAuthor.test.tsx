@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { SWRConfig } from 'swr';
 import { useAuthor } from '../hooks/useAuthor';
 
 function TestComponent({ username }: { username: string | null }) {
@@ -27,12 +28,16 @@ describe('useAuthor', () => {
     jest.clearAllMocks();
   });
 
+  function renderWithSWR(ui: React.ReactElement) {
+    return render(<SWRConfig value={{ provider: () => new Map() }}>{ui}</SWRConfig>);
+  }
+
   it('shows loading then author data on success', async () => {
     global.fetch = jest.fn().mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(userData),
     });
-    render(<TestComponent username={username} />);
+    renderWithSWR(<TestComponent username={username} />);
     expect(screen.getByText(/Loading/)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(`${username} - 42 - 1600000000`)).toBeInTheDocument();
@@ -41,14 +46,14 @@ describe('useAuthor', () => {
 
   it('shows error on fetch failure', async () => {
     global.fetch = jest.fn().mockRejectedValueOnce(new Error('fail'));
-    render(<TestComponent username={username} />);
+    renderWithSWR(<TestComponent username={username} />);
     await waitFor(() => {
       expect(screen.getByText(/Error: Failed to load author details/)).toBeInTheDocument();
     });
   });
 
   it('returns null author if username is null', () => {
-    render(<TestComponent username={null} />);
+    renderWithSWR(<TestComponent username={null} />);
     expect(screen.queryByText(/Loading/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Error/)).not.toBeInTheDocument();
   });
