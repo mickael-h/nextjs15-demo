@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SWRConfig } from 'swr';
 import { StoryList } from '@/components/StoryList';
 import { HNStory } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -10,11 +11,6 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => ({ get: () => null }),
 }));
 
-global.fetch = jest.fn().mockResolvedValue({
-  ok: true,
-  json: () => Promise.resolve({ id: 'author1', karma: 123, created: 1600000000 }),
-});
-
 const mockStories: HNStory[] = [
   {
     id: 1,
@@ -23,13 +19,43 @@ const mockStories: HNStory[] = [
     url: 'https://example.com',
     by: 'author1',
     time: 1600000000,
+    kids: [101],
   },
 ];
+
+const mockComments = {
+  comments: [
+    {
+      id: 101,
+      by: 'commenter1',
+      text: 'This is a test comment',
+      time: 1600000001,
+      kids: [201],
+    },
+  ],
+};
+
+const mockReplies = {
+  comments: [
+    {
+      id: 201,
+      by: 'replyuser',
+      text: 'This is a reply',
+      time: 1600000002,
+      kids: [],
+    },
+  ],
+};
+
+function renderWithSWR(ui: React.ReactElement) {
+  return render(<SWRConfig value={{ provider: () => new Map() }}>{ui}</SWRConfig>);
+}
 
 describe('StoryList component', () => {
   beforeEach(() => {
     document.body.style.background = '';
     document.body.style.color = '';
+    global.fetch = jest.fn(); // Ensure fetch is always a mock
     jest.clearAllMocks();
   });
 
@@ -70,8 +96,23 @@ describe('StoryList component', () => {
     expect(document.body.style.color).toBe('rgb(237, 237, 237)');
   });
 
-  it('allows clicking a story to view its details and back to list', async () => {
-    render(<StoryList stories={mockStories} error={null} page={1} totalPages={1} />);
+  it('allows clicking a story to view its details, shows comments, and back to list', async () => {
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/api/hn/user/author1')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ id: 'author1', karma: 123, created: 1600000000 }),
+        });
+      }
+      if (url.includes('/api/hn/comments/nested')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockComments),
+        });
+      }
+      return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
+    });
+    renderWithSWR(<StoryList stories={mockStories} error={null} page={1} totalPages={1} />);
     const user = userEvent.setup();
     const storyButton = screen.getByRole('button', {
       name: /view details for test story/i,
@@ -83,12 +124,64 @@ describe('StoryList component', () => {
     expect(screen.getByText('Author:')).toBeInTheDocument();
     expect(screen.getByText('author1')).toBeInTheDocument();
     expect(screen.getByText('Karma:')).toBeInTheDocument();
-    expect(screen.getByText('123')).toBeInTheDocument();
+    expect(await screen.findByText((content) => content.includes('123'))).toBeInTheDocument();
     expect(screen.getByText(/account created:/i)).toBeInTheDocument();
     expect(screen.getAllByText(/9\/13\/2020/).length).toBeGreaterThanOrEqual(1);
+    // Assert that the comment is rendered (author and text)
+    expect(
+      await screen.findByText((content) => content.includes('commenter1')),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText((content) => content.includes('This is a test comment')),
+    ).toBeInTheDocument();
     // Go back
     await user.click(screen.getByRole('button', { name: /back to list/i }));
     expect(screen.getByText('Test Story')).toBeInTheDocument();
+  });
+
+  it('renders nested replies in Comment when show replies is clicked', async () => {
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url.includes('/api/hn/user/author1')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ id: 'author1', karma: 123, created: 1600000000 }),
+        });
+      }
+      if (url.includes('/api/hn/comments/nested?ids=101')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockComments),
+        });
+      }
+      if (url.includes('/api/hn/comments/nested?ids=201')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockReplies),
+        });
+      }
+      return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
+    });
+    renderWithSWR(<StoryList stories={mockStories} error={null} page={1} totalPages={1} />);
+    const user = userEvent.setup();
+    const storyButton = screen.getByRole('button', {
+      name: /view details for test story/i,
+    });
+    await user.click(storyButton);
+    // Wait for the comment to appear
+    expect(
+      await screen.findByText((content) => content.includes('commenter1')),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText((content) => content.includes('This is a test comment')),
+    ).toBeInTheDocument();
+    // Click 'show 1 replies' button
+    const showRepliesBtn = await screen.findByRole('button', { name: /show 1 replies/i });
+    await user.click(showRepliesBtn);
+    // Wait for the reply to appear
+    expect(await screen.findByText((content) => content.includes('replyuser'))).toBeInTheDocument();
+    expect(
+      await screen.findByText((content) => content.includes('This is a reply')),
+    ).toBeInTheDocument();
   });
 
   describe('Pagination logic', () => {
