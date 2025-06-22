@@ -1,4 +1,4 @@
-import { fetchUser, fetchPagedTopStories, fetchComments } from './hn';
+import { fetchUser, fetchPagedTopStories, fetchDirectComments } from './hn';
 
 describe('fetchPagedTopStories', () => {
   const hnApiUrl = 'https://mock-hn-api/';
@@ -136,72 +136,16 @@ describe('fetchUser', () => {
   });
 });
 
-describe('fetchComments', () => {
+describe('fetchDirectComments', () => {
   const hnApiUrl = 'https://mock-hn-api/';
 
-  it('returns empty array when no comment IDs provided', async () => {
+  it('returns empty array for empty input', async () => {
     const mockFetch = jest.fn();
-    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, []);
+    const comments = await fetchDirectComments(mockFetch as unknown as typeof fetch, hnApiUrl, []);
     expect(comments).toEqual([]);
   });
 
-  it('returns comments for valid comment IDs', async () => {
-    const mockFetch = jest
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 1,
-            by: 'user1',
-            text: 'First comment',
-            time: 1600000000,
-            kids: [2, 3],
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 2,
-            by: 'user2',
-            text: 'Second comment',
-            time: 1600000001,
-            kids: [],
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 3,
-            by: 'user3',
-            text: 'Third comment',
-            time: 1600000002,
-            kids: [],
-          }),
-      });
-
-    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2]);
-
-    expect(comments).toHaveLength(2);
-    expect(comments[0]).toEqual({
-      id: 1,
-      by: 'user1',
-      text: 'First comment',
-      time: 1600000000,
-      kids: [2, 3], // Now returns IDs for lazy loading
-    });
-    expect(comments[1]).toEqual({
-      id: 2,
-      by: 'user2',
-      text: 'Second comment',
-      time: 1600000001,
-      kids: [],
-    });
-  });
-
-  it('filters out deleted and dead comments', async () => {
+  it('returns only valid comments (filters out deleted/dead)', async () => {
     const mockFetch = jest
       .fn()
       .mockResolvedValueOnce({
@@ -212,8 +156,7 @@ describe('fetchComments', () => {
             by: 'user1',
             text: 'Valid comment',
             time: 1600000000,
-            deleted: false,
-            dead: false,
+            kids: [2],
           }),
       })
       .mockResolvedValueOnce({
@@ -238,143 +181,112 @@ describe('fetchComments', () => {
             dead: true,
           }),
       });
-
-    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2, 3]);
-
+    const comments = await fetchDirectComments(
+      mockFetch as unknown as typeof fetch,
+      hnApiUrl,
+      [1, 2, 3],
+    );
     expect(comments).toHaveLength(1);
     expect(comments[0].id).toBe(1);
+    expect(comments[0].kids).toEqual([2]);
+  });
+
+  it('returns correct structure for valid comments', async () => {
+    const mockFetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: 1,
+          by: 'user1',
+          text: 'Test comment',
+          time: 1600000000,
+          kids: [2, 3],
+        }),
+    });
+    const comments = await fetchDirectComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1]);
+    expect(comments).toHaveLength(1);
+    expect(comments[0]).toEqual({
+      id: 1,
+      by: 'user1',
+      text: 'Test comment',
+      time: 1600000000,
+      kids: [2, 3],
+    });
   });
 
   it('handles fetch errors gracefully', async () => {
-    const mockFetch = jest
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 1,
-            by: 'user1',
-            text: 'Valid comment',
-            time: 1600000000,
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: false, // Simulate fetch error
-      });
-
-    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1, 2]);
-
-    expect(comments).toHaveLength(1);
-    expect(comments[0].id).toBe(1);
+    const mockFetch = jest.fn().mockResolvedValueOnce({ ok: false });
+    const comments = await fetchDirectComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1]);
+    expect(comments).toEqual([]);
   });
 
-  it('respects maxDepth parameter for nested comments', async () => {
+  it('can build a multi-level nested comment tree by sequentially fetching each level', async () => {
+    // Mock fetch for 3 levels: 1 -> 2 -> 3
     const mockFetch = jest
       .fn()
+      // Level 1
       .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
             id: 1,
             by: 'user1',
-            text: 'Level 1 comment',
+            text: 'Root comment',
             time: 1600000000,
             kids: [2],
           }),
       })
+      // Level 2
       .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
             id: 2,
             by: 'user2',
-            text: 'Level 2 comment',
+            text: 'Child comment',
             time: 1600000001,
             kids: [3],
           }),
       })
+      // Level 3
       .mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
             id: 3,
             by: 'user3',
-            text: 'Level 3 comment',
+            text: 'Grandchild comment',
             time: 1600000002,
-            kids: [4],
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 4,
-            by: 'user4',
-            text: 'Level 4 comment (should not be fetched)',
-            time: 1600000003,
             kids: [],
           }),
       });
 
-    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1]);
+    // Fetch root
+    const rootComments = await fetchDirectComments(mockFetch as unknown as typeof fetch, hnApiUrl, [
+      1,
+    ]);
+    expect(rootComments).toHaveLength(1);
+    expect(rootComments[0].id).toBe(1);
+    expect(rootComments[0].kids).toEqual([2]);
 
-    expect(comments).toHaveLength(1);
-    expect(comments[0].id).toBe(1);
-    expect(comments[0].kids).toEqual([2]); // Now returns IDs for lazy loading
-  });
+    // Fetch level 2
+    const childComments = await fetchDirectComments(
+      mockFetch as unknown as typeof fetch,
+      hnApiUrl,
+      [2],
+    );
+    expect(childComments).toHaveLength(1);
+    expect(childComments[0].id).toBe(2);
+    expect(childComments[0].kids).toEqual([3]);
 
-  it('fetches multiple levels of nested comments correctly', async () => {
-    const mockFetch = jest
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 1,
-            by: 'user1',
-            text: 'Level 1 comment',
-            time: 1600000000,
-            kids: [2, 3],
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 2,
-            by: 'user2',
-            text: 'Level 2 comment A',
-            time: 1600000001,
-            kids: [4],
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 3,
-            by: 'user3',
-            text: 'Level 2 comment B',
-            time: 1600000002,
-            kids: [],
-          }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            id: 4,
-            by: 'user4',
-            text: 'Level 3 comment',
-            time: 1600000003,
-            kids: [],
-          }),
-      });
-
-    const comments = await fetchComments(mockFetch as unknown as typeof fetch, hnApiUrl, [1]);
-
-    expect(comments).toHaveLength(1);
-    expect(comments[0].id).toBe(1);
-    expect(comments[0].kids).toEqual([2, 3]); // Returns IDs for lazy loading
+    // Fetch level 3
+    const grandchildComments = await fetchDirectComments(
+      mockFetch as unknown as typeof fetch,
+      hnApiUrl,
+      [3],
+    );
+    expect(grandchildComments).toHaveLength(1);
+    expect(grandchildComments[0].id).toBe(3);
+    expect(grandchildComments[0].kids).toEqual([]);
   });
 });

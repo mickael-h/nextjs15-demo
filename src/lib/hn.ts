@@ -47,60 +47,6 @@ export async function fetchPagedTopStories(
   return { stories: filteredStories, page, limit, total, totalPages };
 }
 
-export async function fetchComments(
-  fetchImpl: typeof fetch,
-  hnApiUrl: string,
-  commentIds: number[],
-): Promise<HNComment[]> {
-  if (!commentIds || commentIds.length === 0) return [];
-
-  const ITEM_URL = `${hnApiUrl}v0/item`;
-
-  const fetchComment = async (id: number): Promise<HNComment | null> => {
-    try {
-      const res = await fetchImpl(`${ITEM_URL}/${id}.json`);
-      if (!res.ok) return null;
-
-      const data = await res.json();
-      if (!data || data.deleted || data.dead) return null;
-
-      return {
-        id: data.id,
-        by: data.by,
-        text: data.text,
-        time: data.time,
-        kids: data.kids, // Always return IDs for lazy loading
-      };
-    } catch {
-      return null;
-    }
-  };
-
-  const comments = await Promise.all(commentIds.map((id) => fetchComment(id)));
-
-  return comments.filter(Boolean) as HNComment[];
-}
-
-export async function fetchUser(
-  fetchImpl: typeof fetch,
-  hnApiUrl: string,
-  username: string,
-): Promise<HNUser> {
-  try {
-    const url = `${hnApiUrl}v0/user/${username}.json`;
-    const res = await fetchImpl(url);
-    if (!res.ok) {
-      throw new Error('Failed to fetch user');
-    }
-    return res.json() as Promise<HNUser>;
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      throw err;
-    }
-    throw new Error('Unknown error');
-  }
-}
-
 export async function fetchDirectComments(
   fetchImpl: typeof fetch,
   hnApiUrl: string,
@@ -129,4 +75,24 @@ export async function fetchDirectComments(
 
   const comments = await Promise.all(commentIds.map(fetchComment));
   return comments.filter(Boolean) as HNComment[];
+}
+
+export async function fetchUser(
+  fetchImpl: typeof fetch,
+  hnApiUrl: string,
+  username: string,
+): Promise<HNUser> {
+  try {
+    const url = `${hnApiUrl}v0/user/${username}.json`;
+    const res = await fetchImpl(url);
+    if (!res.ok) {
+      throw new Error('Failed to fetch user');
+    }
+    return res.json() as Promise<HNUser>;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error('Unknown error');
+  }
 }

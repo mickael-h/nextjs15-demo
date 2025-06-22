@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --verbose",
     "format": "prettier -c .",
     "format:fix": "prettier -cw .",
     "prepare": "husky"

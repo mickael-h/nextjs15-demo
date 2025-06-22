@@ -2,14 +2,18 @@
 import React from 'react';
 import { HNStory } from '@/lib/types';
 import { useAuthor } from '../hooks/useAuthor';
-import { useComments } from '../hooks/useComments';
+import { useNestedComments } from '../hooks/useNestedComments';
 import { LinkPreview } from './LinkPreview';
 import { CommentsList } from './CommentsList';
 import DOMPurify from 'dompurify';
 
 export function StoryDetail({ story, onBack }: { story: HNStory; onBack: () => void }) {
   const { author, loading, error } = useAuthor(story.by);
-  const { comments, loading: commentsLoading, error: commentsError } = useComments(story.id);
+  const {
+    comments,
+    loading: commentsLoading,
+    error: commentsError,
+  } = useNestedComments(story.kids ?? []);
 
   // Safely sanitize HTML content if present
   const sanitizedText = story.text ? DOMPurify.sanitize(story.text) : null;

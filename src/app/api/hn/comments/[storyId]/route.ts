@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchComments } from '@/lib/hn';
+import { fetchDirectComments } from '@/lib/hn';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sto
     }
 
     // Fetch the comments
-    const comments = await fetchComments(fetch, HN_API_URL!, story.kids);
+    const comments = await fetchDirectComments(fetch, HN_API_URL!, story.kids);
 
     return NextResponse.json({ comments });
   } catch (err: unknown) {
