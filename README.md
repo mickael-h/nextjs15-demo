@@ -204,3 +204,12 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 **Questions or feedback?**  
 Open an issue or start a discussion!
+
+---
+
+**Ideas for improvment**
+
+- Integrate the rest of the API.
+- Add integration tests for components.
+- A few Playwright end-to-end tests.
+- Add Storybook and SonarCloud.
