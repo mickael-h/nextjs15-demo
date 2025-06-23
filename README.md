@@ -207,7 +207,7 @@ Open an issue or start a discussion!
 
 ---
 
-**Ideas for improvment**
+**Ideas for improvement**
 
 - Integrate the rest of the API.
 - Add integration tests for components.
